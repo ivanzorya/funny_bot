@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"github.com/joho/godotenv"
 )
 
 
@@ -24,7 +25,18 @@ var buttons = []tgbotapi.KeyboardButton{
 	tgbotapi.KeyboardButton{Text: "Get Joke"},
 }
 
-const WebhookURL = "https://zimniijokebot.herokuapp.com/"
+func goDotEnvVariable(key string) string {
+
+	err := godotenv.Load(".env")
+  
+	if err != nil {
+	  log.Fatalf("Error loading .env file")
+	}
+  
+	return os.Getenv(key)
+  }
+
+const WebhookURL = goDotEnvVariable("WEBHOOK")
 
 func getJoke() string {
 	c := http.Client{}
@@ -48,7 +60,7 @@ func getJoke() string {
 func main() {
 
 	port := os.Getenv("PORT")
-	bot, err := tgbotapi.NewBotAPI("1380731552:AAHgm1Kto9SLdGy2qOMf3__n4PHRJ5ZxC-g")
+	bot, err := tgbotapi.NewBotAPI(goDotEnvVariable("APIKEY"))
 	if err != nil {
 		log.Fatal(err)
 	}
