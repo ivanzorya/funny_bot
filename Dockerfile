@@ -5,8 +5,8 @@ WORKDIR /app
 COPY . ./
 RUN go mod tidy
 
-RUN go build -o /example
+RUN go build -o /bot
 
 EXPOSE 8080
 
-CMD [ "/example" ]
+CMD [ "/bot" ]
