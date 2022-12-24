@@ -11,14 +11,9 @@ import (
 )
 
 
-type Joke struct {
-	ID   uint32 `json:"id"`
-	Joke string `json:"joke"`
-}
-
 type JokeResponse struct {
-	Type  string `json:"type"`
-	Value Joke   `json:"value"`
+	Error  bool `json:"error"`
+	Joke   string `json:"joke"`
 }
 
 var buttons = []tgbotapi.KeyboardButton{
@@ -36,30 +31,30 @@ func goDotEnvVariable(key string) string {
 	return os.Getenv(key)
   }
 
-const WebhookURL = goDotEnvVariable("WEBHOOK")
-
 func getJoke() string {
 	c := http.Client{}
-	resp, err := c.Get("http://api.icndb.com/jokes/random?limitTo=[nerdy]")
+	resp, err := c.Get("https://v2.jokeapi.dev/joke/Programming?type=single")
 	if err != nil {
 		return "jokes API not responding"
 	}
 
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
+
+	
 	joke := JokeResponse{}
 
 	err = json.Unmarshal(body, &joke)
 	if err != nil {
+		log.Fatal(err)
 		return "Joke error"
 	}
 
-	return joke.Value.Joke
+	return joke.Joke
 }
 
 func main() {
 
-	port := os.Getenv("PORT")
 	bot, err := tgbotapi.NewBotAPI(goDotEnvVariable("APIKEY"))
 	if err != nil {
 		log.Fatal(err)
@@ -69,13 +64,10 @@ func main() {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	_, err = bot.SetWebhook(tgbotapi.NewWebhook(WebhookURL))
-	if err != nil {
-		log.Fatal(err)
-	}
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
 
-	updates := bot.ListenForWebhook("/")
-	go http.ListenAndServe(":"+port, nil)
+	updates, err := bot.GetUpdatesChan(u)
 
 	for update := range updates {
 		var message tgbotapi.MessageConfig
